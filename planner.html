@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Personal Planner & Tracker</title>
+    <style>
+        :root {
+            --bg: #090d16;
+            --card-bg: #131a2c;
+            --border: #222f4d;
+            --text-main: #f1f5f9;
+            --text-muted: #64748b;
+            --accent-purple: #a855f7;
+            --accent-green: #10b981;
+            --accent-red: #ef4444;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background-color: var(--bg);
+            color: var(--text-main);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1100px;
+        }
+
+        header {
+            margin-bottom: 25px;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 15px;
+        }
+
+        h1 { margin: 0; font-size: 28px; font-weight: 700; color: #fff; }
+        .date-display { font-size: 14px; color: var(--accent-purple); font-weight: 600; margin-top: 5px; }
+
+        /* Dashboard Grid Layout */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 20px;
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+
+        h2 { font-size: 18px; margin-top: 0; margin-bottom: 15px; display: flex; align-items: center; gap: 8px; }
+
+        /* 1. To-Do List Styling */
+        .input-group {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+
+        input {
+            flex: 1;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 10px;
+            color: white;
+            font-size: 14px;
+        }
+        input:focus { outline: 1px solid var(--accent-purple); }
+
+        button {
+            background: var(--accent-purple);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 10px 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        button:hover { opacity: 0.9; }
+
+        .list-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: var(--bg);
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 8px;
+            border: 1px solid var(--border);
+        }
+
+        .list-left { display: flex; align-items: center; gap: 10px; }
+        .checkbox { cursor: pointer; width: 16px; height: 16px; accent-color: var(--accent-purple); }
+        .done-text { text-decoration: line-through; color: var(--text-muted); }
+        
+        .delete-btn { background: none; color: var(--text-muted); border: none; padding: 0; cursor: pointer; }
+        .delete-btn:hover { color: var(--accent-red); }
+
+        /* 2. Expense Tracker Styling */
+        .expense-total {
+            font-size: 20px;
+            font-weight: bold;
+            color: var(--accent-green);
+            margin-top: 15px;
+            padding-top: 10px;
+            border-top: 1px solid var(--border);
+        }
+
+        /* 3. Reward Locked System */
+        .reward-box {
+            text-align: center;
+            padding: 25px 15px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+        .locked {
+            background: rgba(34, 47, 77, 0.3);
+            border: 2px dashed var(--border);
+            color: var(--text-muted);
+        }
+        .unlocked {
+            background: rgba(16, 185, 129, 0.1);
+            border: 2px dashed var(--accent-green);
+            color: #fff;
+        }
+        .reward-status { font-weight: bold; font-size: 18px; margin-bottom: 10px; }
+        #rewardDisplay { font-size: 22px; font-weight: 700; margin-top: 5px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1 id="greeting">Hello!</h1>
+        <div class="date-display" id="currentDate">Friday, June 26, 2026</div>
+    </header>
+
+    <div class="grid">
+        <div class="card">
+            <h2>📝 Daily Goals <span id="progressCount" style="font-size:12px; color:var(--text-muted); font-weight:normal; margin-left:auto;">(0/0)</span></h2>
+            <div class="input-group">
+                <input type="text" id="todoInput" placeholder="Add a vital task...">
+                <button onclick="addTodo()">Add</button>
+            </div>
+            <div id="todoContainer"></div>
+        </div>
+
+        <div class="card">
+            <h2>💰 Daily Expenses</h2>
+            <div class="input-group">
+                <input type="text" id="expName" placeholder="What did you buy?">
+                <input type="number" id="expAmount" placeholder="₹ Amount" style="max-width: 100px;">
+                <button onclick="addExpense()" style="background: var(--accent-green)">Log</button>
+            </div>
+            <div id="expenseContainer"></div>
+            <div class="expense-total">Total Spent: ₹<span id="totalExpenseDisplay">0</span></div>
+        </div>
+
+        <div class="card">
+            <h2>🎁 Daily Reward Lock</h2>
+            <div class="input-group" style="margin-bottom: 20px;">
+                <input type="text" id="rewardInput" placeholder="Define your treat (e.g. A 30min Nap)">
+                <button onclick="setReward()">Set Treat</button>
+            </div>
+            
+            <div id="rewardCard" class="reward-box locked">
+                <div class="reward-status" id="lockStatusEmoji">🔒 LOCKED</div>
+                <div style="font-size: 13px;" id="lockMessage">Complete at least 1 task to unlock your treat.</div>
+                <div id="rewardDisplay">No Treat Set Yet</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // App Data State
+    let state = {
+        todos: [],
+        expenses: [],
+        targetReward: "No Treat Set Yet"
+    };
+
+    // Initialize Page
+    window.onload = function() {
+        setupDate();
+        loadFromLocalStorage();
+        render();
+    };
+
+    function setupDate() {
+        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        document.getElementById('currentDate').innerText = new Date().toLocaleDateString('en-IN', options);
+    }
+
+    // LocalStorage Functions
+    function saveToLocalStorage() {
+        localStorage.setItem('digital_planner_state', JSON.stringify(state));
+    }
+    function loadFromLocalStorage() {
+        const saved = localStorage.getItem('digital_planner_state');
+        if (saved) {
+            state = JSON.parse(saved);
+        }
+    }
+
+    // Rendering Engine
+    function render() {
+        renderTodos();
+        renderExpenses();
+        renderReward();
+        saveToLocalStorage();
+    }
+
+    // --- TODO CONTROLLER ---
+    function addTodo() {
+        const input = document.getElementById('todoInput');
+        if (!input.value.trim()) return;
+        state.todos.push({ id: Date.now(), text: input.value.trim(), done: false });
+        input.value = '';
+        render();
+    }
+
+    function toggleTodo(id) {
+        state.todos = state.todos.map(t => t.id === id ? { ...t, done: !t.done } : t);
+        render();
+    }
+
+    function deleteTodo(id) {
+        state.todos = state.todos.filter(t => t.id !== id);
+        render();
+    }
+
+    function renderTodos() {
+        const container = document.getElementById('todoContainer');
+        container.innerHTML = '';
+        let completedCount = 0;
+
+        state.todos.forEach(todo => {
+            if (todo.done) completedCount++;
+            const item = document.createElement('div');
+            item.className = 'list-item';
+            item.innerHTML = `
+                <div class="list-left">
+                    <input type="checkbox" class="checkbox" ${todo.done ? 'checked' : ''} onchange="toggleTodo(${todo.id})">
+                    <span class="${todo.done ? 'done-text' : ''}">${todo.text}</span>
+                </div>
+                <button class="delete-btn" onclick="deleteTodo(${todo.id})">🗑️</button>
+            `;
+            container.appendChild(item);
+        });
+
+        document.getElementById('progressCount').innerText = `(${completedCount}/${state.todos.length})`;
+    }
+
+    // --- EXPENSE CONTROLLER ---
+    function addExpense() {
+        const nameInput = document.getElementById('expName');
+        const amountInput = document.getElementById('expAmount');
+        const val = parseFloat(amountInput.value);
+
+        if (!nameInput.value.trim() || isNaN(val) || val <= 0) return;
+
+        state.expenses.push({ id: Date.now(), title: nameInput.value.trim(), amount: val });
+        nameInput.value = '';
+        amountInput.value = '';
+        render();
+    }
+
+    function deleteExpense(id) {
+        state.expenses = state.expenses.filter(e => e.id !== id);
+        render();
+    }
+
+    function renderExpenses() {
+        const container = document.getElementById('expenseContainer');
+        container.innerHTML = '';
+        let total = 0;
+
+        state.expenses.forEach(exp => {
+            total += exp.amount;
+            const item = document.createElement('div');
+            item.className = 'list-item';
+            item.innerHTML = `
+                <div class="list-left">
+                    <span style="color:var(--text-muted)">🔹</span>
+                    <span>${exp.title}</span>
+                </div>
+                <div>
+                    <span style="color:var(--accent-green); margin-right:10px; font-weight:600;">₹${exp.amount}</span>
+                    <button class="delete-btn" onclick="deleteExpense(${exp.id})">🗑️</button>
+                </div>
+            `;
+            container.appendChild(item);
+        });
+
+        document.getElementById('totalExpenseDisplay').innerText = total;
+    }
+
+    // --- REWARD CONTROLLER ---
+    function setReward() {
+        const input = document.getElementById('rewardInput');
+        if (!input.value.trim()) return;
+        state.targetReward = input.value.trim();
+        input.value = '';
+        render();
+    }
+
+    function renderReward() {
+        const rewardCard = document.getElementById('rewardCard');
+        const lockStatusEmoji = document.getElementById('lockStatusEmoji');
+        const lockMessage = document.getElementById('lockMessage');
+        const display = document.getElementById('rewardDisplay');
+
+        display.innerText = state.targetReward;
+
+        const totalTasks = state.todos.length;
+        const completedTasks = state.todos.filter(t => t.done).length;
+
+        // Unlock logic: Must have tasks, and ALL of them must be checked off
+        if (totalTasks > 0 && completedTasks === totalTasks) {
+            rewardCard.className = "reward-box unlocked";
+            lockStatusEmoji.innerText = "🔑 UNLOCKED!";
+            lockMessage.innerText = "Enjoy your well-deserved reward!";
+        } else {
+            rewardCard.className = "reward-box locked";
+            lockStatusEmoji.innerText = "🔒 LOCKED";
+            if (totalTasks === 0) {
+                lockMessage.innerText = "Add a goal first to set up the lock mechanism.";
+            } else {
+                lockMessage.innerText = `Finish all tasks (${completedTasks}/${totalTasks} done) to claim your treat!`;
+            }
+        }
+    }
+</script>
+</body>
+</html>
