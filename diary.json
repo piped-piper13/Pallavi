@@ -1,0 +1,74 @@
+document.addEventListener('DOMContentLoaded', loadInitialData);
+document.getElementById('postBtn').addEventListener('click', spillTea);
+
+let diaryEntries = [];
+
+// 1. Fetch starter data from your diary.json file
+async function loadInitialData() {
+    try {
+        const response = await fetch('diary.json');
+        const data = await response.json();
+        
+        // Load existing data from browser memory or fallback to JSON file
+        const savedData = localStorage.getItem('localDrama');
+        if (savedData) {
+            diaryEntries = JSON.parse(savedData);
+        } else {
+            diaryEntries = data;
+            localStorage.setItem('localDrama', JSON.stringify(diaryEntries));
+        }
+        
+        displayEntries();
+    } catch (error) {
+        console.error("Could not load diary.json file:", error);
+    }
+}
+
+// 2. Add a new drama entry
+function spillTea() {
+    const aliasInput = document.getElementById('aliasInput');
+    const dramaInput = document.getElementById('dramaInput');
+
+    const alias = aliasInput.value.trim() || 'Anonymous';
+    const text = dramaInput.value.trim();
+
+    if (!text) {
+        alert("You can't post empty drama!");
+        return;
+    }
+
+    const newEntry = {
+        alias: alias,
+        date: new Date().toLocaleString(),
+        text: text
+    };
+
+    // Add new post to the top of our array
+    diaryEntries.unshift(newEntry);
+
+    // Save back to local storage so it persists on refresh
+    localStorage.setItem('localDrama', JSON.stringify(diaryEntries));
+
+    // Clear inputs and reload feed
+    dramaInput.value = '';
+    displayEntries();
+}
+
+// 3. Render the posts visually on the screen
+function displayEntries() {
+    const container = document.getElementById('feedContainer');
+    container.innerHTML = '';
+
+    diaryEntries.forEach(entry => {
+        const card = document.createElement('div');
+        card.className = 'entry-card';
+        card.innerHTML = `
+            <div class="entry-header">
+                <span class="alias">🤫 From: ${entry.alias}</span>
+                <span>${entry.date}</span>
+            </div>
+            <div class="entry-text">${entry.text}</div>
+        `;
+        container.appendChild(card);
+    });
+}
